@@ -31,7 +31,7 @@ Alert Rule Action Group -> Actions:
     - If specified this will be used as the destination webhook url for any/all Slack notifications unless it is overwritten by
         configuration recieved in the Alert common schema as a Custom Property named `SlackChannelWebHookUri` (more info below).
 
-## Applicadtion Insights Rule Options:
+## Application Insights Rule Options:
 
  The following properties are read from the App Insights common schema payload that is posted to the Function App via webhook. These values
  are used in the Slack message and/or may be used however you like if you customize the logic that builds the message:
