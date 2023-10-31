@@ -1,7 +1,7 @@
 ﻿# ApplicationInsights.SlackProxy
-This is a ready to go integration application for Application Insights alert notifications in Slack via Azure Functions!
+This is a ready to go .NET integration application for Application Insights alert notifications in Slack via Azure Functions!
 
-You can use it as-is or fork it and customize as needed. But as it stands the solution provides a flexible, generic, configuration driven soluition for reliably proxying
+You are welcom to use it as-is or fork it and customize as needed. But as it stands the solution provides a flexible, generic, configuration driven soluition for reliably proxying
 notifications from Application Insights Alert rules to Slack.
 
 Released under the MIT license you are free to use and customize as needed....
