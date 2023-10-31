@@ -49,7 +49,8 @@ Alert Rule Action Group -> Actions:
   - `LinkToFilteredSearchResultsUIUri`
     - Used to provide a convenient Link to the raw search results in the Slack Notification.
     - Retrieved from the first occurrence of `data.alertContext.codition.allOf[0]` in the payload.
-  - Custom Properties - any or all of the following may be optionally specified and used in the Slack message
+  - Custom Properties - any or all of the following may be optionally specified and used in the Slack message by simply adding
+     them to the Alert Rule as `Custom Properties` which are included in the Application Insights Common Schema paylaod when sent to the SlackProxy application.
     - `HeaderDescription`: A high level description used in the Slack message header.
     - `SearchQueryDescription`: A simple name description of the Search Query triggering the alert and used in the Slack Message for quick context.
     - `SlackChannelWebHookUri`: If specified this should be a well-formed Uri for the Slack Channel destination for which the mssage will be sent; 
