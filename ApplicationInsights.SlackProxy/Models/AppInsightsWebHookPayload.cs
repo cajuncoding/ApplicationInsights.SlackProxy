@@ -2,7 +2,8 @@
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.Serialization;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using SlackProxy.CustomExtensions;
 
 namespace SlackProxy.Models
@@ -34,23 +35,28 @@ namespace SlackProxy.Models
     public class AppInsightsWebHookPayload
     {
         public static AppInsightsWebHookPayload Parse(string payload)
-            => new AppInsightsWebHookPayload(JObject.Parse(payload));
+            => new AppInsightsWebHookPayload(JsonObject.Parse(payload));
 
-        public AppInsightsWebHookPayload(JObject json)
+        public AppInsightsWebHookPayload(JsonNode json)
         {
             Json = json;
 
-            dynamic dataJson = json["data"];
-            dynamic essentialsJson = dataJson?.essentials;
+            var dataJson = json["data"];
+            if (dataJson is null)
+                return;
             
-            AlertRuleName = essentialsJson?.alertRule;
-            AlertRuleDescription = essentialsJson?.description;
+            var essentialsJson = dataJson["essentials"];
+            
+            AlertRuleName = essentialsJson["alertRule"].GetValue<string>();
+            AlertRuleDescription = essentialsJson["description"].GetValue<string>();
 
-            var severityText = (string)essentialsJson?.severity?.ToString();
+            var severityText = essentialsJson["severity"].GetValue<string>();
             Severity = string.IsNullOrWhiteSpace(severityText) 
                 ? AppInsightsSeverity.Warning 
                 : (AppInsightsSeverity)Convert.ToInt32(severityText.Replace(AppInsightsConstants.SeverityPrefix, string.Empty));
+            
             SeverityDescription = Severity.GetEnumMemberName();
+            
             SeverityIcon = Severity switch
             {
                 AppInsightsSeverity.Critical => AppInsightsConstants.CriticalIcon,
@@ -59,29 +65,29 @@ namespace SlackProxy.Models
                 _ => AppInsightsConstants.InformationIcon
             };
 
-            dynamic firstAllOfJson = dataJson?.alertContext?.condition?.allOf?[0];
+            var firstAllOfJson = dataJson["alertContext"]?["condition"]?["allOf"].AsArray()?.FirstOrDefault();
 
-            SearchQueryText = firstAllOfJson?.searchQuery;
-            LinkToFilteredSearchResultsUIUri = firstAllOfJson?.linkToFilteredSearchResultsUI;
-            LinkToSearchResultsUIUri = firstAllOfJson?.linkToSearchResultsUI;
+            SearchQueryText = firstAllOfJson?["searchQuery"].GetValue<string>();
+            LinkToFilteredSearchResultsUIUri = firstAllOfJson?["linkToFilteredSearchResultsUI"].GetValue<Uri>();
+            LinkToSearchResultsUIUri = firstAllOfJson?["linkToSearchResultsUI"].GetValue<Uri>();
 
-            dynamic customPropsJson = dataJson?.customProperties;
+            var customPropsJson = dataJson["customProperties"];
 
             //Support either Pascal Case or Camel Case in the custom prop names...
-            HeaderDescription = customPropsJson?.HeaderDescription ?? customPropsJson?.headerDescription;
-            SearchQueryDescription = customPropsJson?.SearchQueryDescription ?? customPropsJson?.searchQueryDescription;
-            SlackChannelWebHookUri = customPropsJson?.SlackChannelWebHookUri;
-            AdditionalMessages = ((JObject)customPropsJson)?.Properties()
+            HeaderDescription = (customPropsJson?["HeaderDescription"] ?? customPropsJson?["headerDescription"])?.GetValue<string>();
+            SearchQueryDescription = (customPropsJson?["SearchQueryDescription"] ?? customPropsJson?["searchQueryDescription"])?.GetValue<string>();
+            SlackChannelWebHookUri = customPropsJson?["SlackChannelWebHookUri"]?.GetValue<Uri>();
+            AdditionalMessages = customPropsJson?.AsObject()?.ToArray()
                 .Where(prop => 
-                    prop.Value.Type == JTokenType.String //This also means it is not JTokenType.Null!
-                    && prop.Name.StartsWith("AdditionalMessage", StringComparison.OrdinalIgnoreCase)
+                    prop.Value.GetValueKind() == JsonValueKind.String //This also means it is not JTokenType.Null!
+                    && prop.Key.StartsWith("AdditionalMessage", StringComparison.OrdinalIgnoreCase)
                 )
-                .OrderBy(prop => prop.Name)
-                .Select(prop => prop.Value.ToString())
+                .OrderBy(prop => prop.Key)
+                .Select(prop => prop.Value.GetValue<string>())
                 .ToArray();
             }
 
-        public JObject Json { get; }
+        public JsonNode Json { get; }
         public string HeaderDescription { get; }
         public AppInsightsSeverity Severity { get; }
         public string SeverityIcon { get; }
@@ -91,7 +97,7 @@ namespace SlackProxy.Models
         public string SearchQueryText { get; }
         public string SearchQueryDescription { get; }
         public Uri SlackChannelWebHookUri { get; }
-        public string[]? AdditionalMessages { get; }
+        public string[] AdditionalMessages { get; }
         public Uri LinkToFilteredSearchResultsUIUri { get; }
         public Uri LinkToSearchResultsUIUri { get; }
     }

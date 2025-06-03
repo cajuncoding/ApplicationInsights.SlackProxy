@@ -2,7 +2,7 @@
   "profiles": {
     "ApplicationInsights.SlackProxy": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7270",
+      "commandLineArgs": "--port 7126",
       "launchBrowser": false
     }
   }
