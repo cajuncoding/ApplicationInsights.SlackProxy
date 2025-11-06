@@ -41,7 +41,7 @@
       "customProperties": {
         "HeaderDescription": "High exception rate detected in web-api",
         "searchQueryDescription": "Exceptions in the last 5 minutes for web-api",
-        "slackChannelWebHoookUri": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+        "slackChannelWebHoookUri": null
       }
     }
   }
