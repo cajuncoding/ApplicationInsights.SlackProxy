@@ -1,8 +1,8 @@
 {
-    "IsEncrypted": false,
+  "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "DefaultSlackChannelWebHookUri": "https://hooks.slack.com/services/{{Slack Webhook Path Details Go Here}}"
   }
 }

@@ -1,0 +1,48 @@
+{
+  "schemaId": "azureMonitorCommonAlertSchema",
+  "data": {
+    "essentials": {
+      "alertId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-rg/providers/microsoft.insights/metricAlerts/my-alert",
+      "alertRule": "AppInsightsErrorAlert",
+      "severity": "Sev3",
+      "signalType": "Log",
+      "monitorCondition": "Fired",
+      "monitoringService": "Application Insights",
+      "alertTargetIDs": [
+        "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-rg/providers/microsoft.insights/components/my-appinsights"
+      ],
+      "originAlertId": "12345678-90ab-cdef-1234-567890abcdef",
+      "firedDateTime": "2025-11-06T19:35:00.000Z",
+      "description": "Error rate exceeded threshold in Application Insights",
+      "essentialsVersion": "1.0"
+    },
+    "alertContext": {
+      "condition": {
+        "allOf": [
+          {
+            "metricName": "customMetrics",
+            "metricNamespace": "ApplicationInsights",
+            "operator": "GreaterThan",
+            "threshold": "10",
+            "timeAggregation": "Total",
+            "dimensions": [
+              {
+                "name": "cloud_RoleName",
+                "value": "web-api"
+              }
+            ],
+            "metricValue": "15"
+          }
+        ]
+      },
+      "searchQuery": "exceptions | where cloud_RoleName == 'web-api' and timestamp > ago(5m)",
+      "linkToFilteredSearchResultUI": "https://portal.azure.com/#blade/AppInsightsExtension/SearchBlade/filteredSearchResults/query/exceptions%20%7C%20where%20cloud_RoleName%20%3D%3D%20'web-api'%20and%20timestamp%20%3E%20ago(5m)",
+      "linkToSearchResultsUI": "https://portal.azure.com/#blade/AppInsightsExtension/SearchBlade/results",
+      "customProperties": {
+        "HeaderDescription": "High exception rate detected in web-api",
+        "searchQueryDescription": "Exceptions in the last 5 minutes for web-api",
+        "slackChannelWebHoookUri": null //NOTE: This is considered a SECRET so DO NOT your value to GIT!!!!
+      }
+    }
+  }
+}

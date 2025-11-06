@@ -1,17 +1,30 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<AzureFunctionsVersion>v4</AzureFunctionsVersion>
+		<OutputType>Exe</OutputType>
 		<RootNamespace>SlackProxy</RootNamespace>
+		<Version>2.0.0</Version>
+		<InformationalVersion>ApplicationInsights-SlackProxy-Net8.0-IsolatedProcess</InformationalVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 	<ItemGroup>
-	  <None Include="..\README.md" Link="README.md" />
+		<PackageReference Include="Flurl.Http" Version="4.0.2" />
+		<PackageReference Include="Functions.Worker.ILoggerSupport" Version="1.0.3" />
+		<PackageReference Include="Macross.Json.Extensions" Version="3.0.0" />
+		<PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.2.0" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.0.0" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.5" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Flurl.Http" Version="3.2.4" />
-		<PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.2.0" />
+		<None Include="..\README.md" Link="README.md" />
 	</ItemGroup>
 	<ItemGroup>
+		<None Update="appSettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="host.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
