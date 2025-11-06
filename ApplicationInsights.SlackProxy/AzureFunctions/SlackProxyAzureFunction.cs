@@ -1,6 +1,5 @@
 using System;
 using System.Net;
-using System.Threading.Tasks;
 using SlackProxy.Configuration;
 using SlackProxy.Models;
 using Microsoft.Azure.Functions.Worker;
@@ -25,7 +24,7 @@ namespace SlackProxy.AzureFunctions
 
             //Log the App insights Payload sent (for debugging)...
             log.LogInformation("Executing Slack Proxy triggered br Application Insights WebHook...");
-            log.LogInformation($"APP INSIGHTS PAYLOAD:{Environment.NewLine}{requestBody}");
+            log.LogInformation($"APP INSIGHTS PAYLOAD:{Environment.NewLine}{{RequestBody}}", requestBody);
 
             //Parse the payload Json into our model...
             var appInsightsPayload = AppInsightsWebHookPayload.Parse(requestBody);

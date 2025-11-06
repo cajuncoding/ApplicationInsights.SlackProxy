@@ -5,6 +5,7 @@ using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using SlackProxy.CustomExtensions;
+using SystemTextJsonExtensions;
 
 namespace SlackProxy.Models
 {
@@ -34,10 +35,10 @@ namespace SlackProxy.Models
 
     public class AppInsightsWebHookPayload
     {
-        public static AppInsightsWebHookPayload Parse(string payload)
-            => new AppInsightsWebHookPayload(JsonObject.Parse(payload));
+        public static AppInsightsWebHookPayload Parse(string jsonPayload)
+            => new AppInsightsWebHookPayload(jsonPayload.FromJsonTo<JsonObject>());
 
-        public AppInsightsWebHookPayload(JsonNode json)
+        public AppInsightsWebHookPayload(JsonObject json)
         {
             Json = json;
 
@@ -50,11 +51,15 @@ namespace SlackProxy.Models
             AlertRuleName = essentialsJson["alertRule"].GetValue<string>();
             AlertRuleDescription = essentialsJson["description"].GetValue<string>();
 
-            var severityText = essentialsJson["severity"].GetValue<string>();
-            Severity = string.IsNullOrWhiteSpace(severityText) 
-                ? AppInsightsSeverity.Warning 
-                : (AppInsightsSeverity)Convert.ToInt32(severityText.Replace(AppInsightsConstants.SeverityPrefix, string.Empty));
-            
+            var severityText = essentialsJson["severity"]?.GetValue<string>();
+            var severityIntText = !string.IsNullOrWhiteSpace(severityText)
+                ? severityText.Replace(AppInsightsConstants.SeverityPrefix, string.Empty)
+                : null;
+
+            Severity = int.TryParse(severityIntText, out var severityIntValue)
+                ? (AppInsightsSeverity)severityIntValue
+                : AppInsightsSeverity.Warning;
+
             SeverityDescription = Severity.GetEnumMemberName();
             
             SeverityIcon = Severity switch
@@ -65,29 +70,31 @@ namespace SlackProxy.Models
                 _ => AppInsightsConstants.InformationIcon
             };
 
-            var firstAllOfJson = dataJson["alertContext"]?["condition"]?["allOf"].AsArray()?.FirstOrDefault();
+            var firstAllOfJson = dataJson["alertContext"]?["condition"]?["allOf"]?.AsArray()?.FirstOrDefault();
 
-            SearchQueryText = firstAllOfJson?["searchQuery"].GetValue<string>();
-            LinkToFilteredSearchResultsUIUri = firstAllOfJson?["linkToFilteredSearchResultsUI"].GetValue<Uri>();
-            LinkToSearchResultsUIUri = firstAllOfJson?["linkToSearchResultsUI"].GetValue<Uri>();
+            SearchQueryText = firstAllOfJson?["searchQuery"]?.GetValue<string>();
+            LinkToFilteredSearchResultsUIUri = firstAllOfJson?["linkToFilteredSearchResultsUI"]?.GetConvertedValue<Uri>();
+            LinkToSearchResultsUIUri = firstAllOfJson?["linkToSearchResultsUI"]?.GetConvertedValue<Uri>();
 
             var customPropsJson = dataJson["customProperties"];
 
             //Support either Pascal Case or Camel Case in the custom prop names...
             HeaderDescription = (customPropsJson?["HeaderDescription"] ?? customPropsJson?["headerDescription"])?.GetValue<string>();
             SearchQueryDescription = (customPropsJson?["SearchQueryDescription"] ?? customPropsJson?["searchQueryDescription"])?.GetValue<string>();
-            SlackChannelWebHookUri = customPropsJson?["SlackChannelWebHookUri"]?.GetValue<Uri>();
-            AdditionalMessages = customPropsJson?.AsObject()?.ToArray()
+            SlackChannelWebHookUri = customPropsJson?["SlackChannelWebHookUri"]?.GetConvertedValue<Uri>();
+            AdditionalMessages = customPropsJson
+                ?.AsObject()
+                ?.ToArray()
                 .Where(prop => 
                     prop.Value.GetValueKind() == JsonValueKind.String //This also means it is not JTokenType.Null!
                     && prop.Key.StartsWith("AdditionalMessage", StringComparison.OrdinalIgnoreCase)
                 )
                 .OrderBy(prop => prop.Key)
                 .Select(prop => prop.Value.GetValue<string>())
-                .ToArray();
-            }
+                .ToArray() ?? Array.Empty<string>();
+        }
 
-        public JsonNode Json { get; }
+        public JsonObject Json { get; }
         public string HeaderDescription { get; }
         public AppInsightsSeverity Severity { get; }
         public string SeverityIcon { get; }
