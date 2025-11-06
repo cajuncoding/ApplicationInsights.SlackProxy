@@ -41,7 +41,7 @@
       "customProperties": {
         "HeaderDescription": "High exception rate detected in web-api",
         "searchQueryDescription": "Exceptions in the last 5 minutes for web-api",
-        "slackChannelWebHoookUri{{PLACEHOLDER}}": null
+        "slackChannelWebHoookUri": null //NOTE: This is considered a SECRET so DO NOT your value to GIT!!!!
       }
     }
   }
