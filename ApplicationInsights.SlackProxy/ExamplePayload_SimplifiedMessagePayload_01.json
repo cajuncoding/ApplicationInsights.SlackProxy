@@ -1,0 +1,10 @@
+{
+  "status": "Successful",
+  "headerDescription": "[⭐ TESTING Please IGNORE ⭐] Slack Proxy Alert - This is just a Test 🆗",
+  "primaryMessage": "This is a test of the slack-proxy simplified message payload model.",
+  "additionalMessages": [
+    "This is only a test for debugging and confirming that the new simplified message model is working 🚀."
+  ],
+  "referencedLinkUri": "https://github.com/cajuncoding/ApplicationInsights.SlackProxy",
+  "referencedLinkDescription": "See more details in the Github repo..."
+}

@@ -7,10 +7,9 @@ namespace SlackProxy.Configuration
     {
         public SlackProxyConfig()
         {
-            DefaultSlackChannelWebHookUri = new Uri(
-                Environment.GetEnvironmentVariable("DefaultSlackChannelWebHookUri")
-                    ?? throw new ArgumentException("The [DefaultSlackChannelWebHookUri] configuration value is missing or null.")
-            );
+            DefaultSlackChannelWebHookUri = Uri.TryCreate(Environment.GetEnvironmentVariable("DefaultSlackChannelWebHookUri"), UriKind.Absolute, out var parsedUri)
+                ? parsedUri
+                : throw new ArgumentException("The [DefaultSlackChannelWebHookUri] configuration value is missing or null.");
         }
 
         public Uri DefaultSlackChannelWebHookUri { get; }

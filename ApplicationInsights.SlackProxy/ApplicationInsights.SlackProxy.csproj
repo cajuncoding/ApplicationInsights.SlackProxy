@@ -10,6 +10,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Flurl.Http" Version="4.0.2" />
+		<PackageReference Include="Functions.Worker.HttpResponseDataJsonMiddleware" Version="1.1.0" />
 		<PackageReference Include="Functions.Worker.ILoggerSupport" Version="1.0.3" />
 		<PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
 		<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />

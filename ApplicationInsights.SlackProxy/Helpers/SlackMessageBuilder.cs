@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SlackProxy.Models
+namespace SlackProxy.Helpers
 {
     public enum SlackBlockType { Header, Section }
 
@@ -22,7 +22,7 @@ namespace SlackProxy.Models
                     text = new
                     {
                         type = type == SlackBlockType.Header || !isMarkdown ? "plain_text" : "mrkdwn",
-                        text = text
+                        text
                     }
                 });
             }

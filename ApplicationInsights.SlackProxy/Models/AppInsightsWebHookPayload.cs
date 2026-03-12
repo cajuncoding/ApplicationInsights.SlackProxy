@@ -1,23 +1,12 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.Runtime.Serialization;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using SlackProxy.CustomExtensions;
+using SlackProxy.Helpers;
 using SystemTextJsonHelpers;
 
 namespace SlackProxy.Models
 {
-    public static class AppInsightsConstants
-    {
-        public const string SeverityPrefix = "Sev";
-        public const string CriticalIcon = "🚨";
-        public const string ErrorIcon = "‼️";
-        public const string WarningIcon = "⚠️";
-        public const string InformationIcon = "ℹ️";
-        public static ImmutableArray<AppInsightsSeverity> WarningOrErrorSeverities = new[] { AppInsightsSeverity.Critical, AppInsightsSeverity.Error, AppInsightsSeverity.Warning }.ToImmutableArray();
-    }
-
     public enum AppInsightsSeverity
     {
         [EnumMember(Value = "Trace")]
@@ -32,19 +21,26 @@ namespace SlackProxy.Models
         Critical = 4,
     }
 
-    public class AppInsightsWebHookPayload
+    public class AppInsightsWebHookPayload : ISlackMessagePayload
     {
-        public static AppInsightsWebHookPayload Parse(string jsonPayload)
-            => new AppInsightsWebHookPayload(jsonPayload.FromJsonTo<JsonObject>());
+        public static ISlackMessagePayload Parse(string jsonPayload)
+            => jsonPayload.FromJsonTo<JsonObject>() is JsonObject json && IsValidAppInsightsPayload(json)
+                ? new AppInsightsWebHookPayload(json)
+                : null;
+
+        private static bool IsValidAppInsightsPayload(JsonObject json)
+            => json?["data"] is JsonObject dataJson
+                && dataJson["essentials"]?["alertRule"] is not null
+                && dataJson["customProperties"]?["headerDescription"] is not null;
 
         public AppInsightsWebHookPayload(JsonObject json)
         {
             Json = json;
+            
+            if (!IsValidAppInsightsPayload(json))
+                return;
 
             var dataJson = json["data"];
-            if (dataJson is null)
-                return;
-            
             var essentialsJson = dataJson["essentials"];
             
             AlertRuleName = essentialsJson["alertRule"].GetValue<string>();
@@ -52,7 +48,7 @@ namespace SlackProxy.Models
 
             var severityText = essentialsJson["severity"]?.GetValue<string>();
             var severityIntText = !string.IsNullOrWhiteSpace(severityText)
-                ? severityText.Replace(AppInsightsConstants.SeverityPrefix, string.Empty)
+                ? severityText.Replace(MessageConstants.SeverityPrefix, string.Empty)
                 : null;
 
             Severity = int.TryParse(severityIntText, out var severityIntValue)
@@ -63,10 +59,10 @@ namespace SlackProxy.Models
             
             SeverityIcon = Severity switch
             {
-                AppInsightsSeverity.Critical => AppInsightsConstants.CriticalIcon,
-                AppInsightsSeverity.Error => AppInsightsConstants.ErrorIcon,
-                AppInsightsSeverity.Warning => AppInsightsConstants.WarningIcon,
-                _ => AppInsightsConstants.InformationIcon
+                AppInsightsSeverity.Critical => MessageConstants.CriticalIcon,
+                AppInsightsSeverity.Error => MessageConstants.ErrorIcon,
+                AppInsightsSeverity.Warning => MessageConstants.WarningIcon,
+                _ => MessageConstants.InformationIcon
             };
 
             var firstAllOfJson = dataJson["alertContext"]?["condition"]?["allOf"]?.AsArray()?.FirstOrDefault();
@@ -78,13 +74,13 @@ namespace SlackProxy.Models
             var customPropsJson = dataJson["customProperties"];
 
             //Support either Pascal Case or Camel Case in the custom prop names...
-            HeaderDescription = (customPropsJson?["HeaderDescription"] ?? customPropsJson?["headerDescription"])?.ValueSafely<string>();
-            SearchQueryDescription = (customPropsJson?["SearchQueryDescription"] ?? customPropsJson?["searchQueryDescription"])?.ValueSafely<string>();
-            SlackChannelWebHookUri = customPropsJson?["SlackChannelWebHookUri"]?.ValueSafely<Uri>();
+            HeaderDescription = customPropsJson?["headerDescription"]?.ValueSafely<string>();
+            SearchQueryDescription = customPropsJson?["searchQueryDescription"]?.ValueSafely<string>();
+            SlackChannelWebHookUri = customPropsJson?["slackChannelWebHookUri"]?.ValueSafely<Uri>();
             AdditionalMessages = customPropsJson
                 ?.AsObject()
                 ?.GetProperties(dataTypeFilter: JsonDataTypeFilter.String)
-                .Where(prop => prop.Key.StartsWith("AdditionalMessage", StringComparison.OrdinalIgnoreCase))
+                .Where(prop => prop.Key.StartsWith("additionalMessage", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(prop => prop.Key)
                 .Select(prop => prop.Value?.ValueSafely<string>())
                 .ToArray() ?? Array.Empty<string>();
@@ -103,5 +99,30 @@ namespace SlackProxy.Models
         public string[] AdditionalMessages { get; }
         public Uri LinkToFilteredSearchResultsUIUri { get; }
         public Uri LinkToSearchResultsUIUri { get; }
+
+        public object BuildSlackMessagePayload()
+        {
+            var queryDescriptionClause = SearchQueryDescription != null
+                ? $"via *[{SearchQueryDescription}]* "
+                : string.Empty;
+
+            //Formulate the Alert/Warning message...
+            var slackMessageBuilder = new SlackMessageBuilder()
+                .AddHeader($"{SeverityIcon} [{SeverityDescription}] {HeaderDescription}")
+                .AddSection($"An alert for *[{AlertRuleDescription}]* has been triggered.");
+
+            if (MessageConstants.WarningOrErrorSeverities.Contains(Severity))
+                slackMessageBuilder.AddSection($"Warnings or Errors have been reported {queryDescriptionClause} and there may be an issue that needs to be investigated.");
+
+            //Append any additional messages that are configured as custom properties...
+            foreach (var additionalMessage in AdditionalMessages)
+                slackMessageBuilder.AddSection(additionalMessage);
+
+            //Append the final link to AppInsights if available...
+            if (LinkToFilteredSearchResultsUIUri != null)
+                slackMessageBuilder.AddSection($"<{LinkToFilteredSearchResultsUIUri}|Click here for Alert Query results...>");
+
+            return slackMessageBuilder.BuildPayload();
+        }
     }
 }
