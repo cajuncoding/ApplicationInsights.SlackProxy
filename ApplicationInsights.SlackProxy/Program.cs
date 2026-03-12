@@ -3,7 +3,7 @@ using Functions.Worker.ILoggerSupport;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SystemTextJsonExtensions.GlobalDefaults;
+using SystemTextJsonHelpers;
 
 var host = Host
     .CreateDefaultBuilder()
@@ -25,8 +25,7 @@ var host = Host
 
 //System.Text.Json -- Configure relaxed/loose default settings for Flurl with SystemTextJson (e.g. Camel Case, Case-insensitivity, Don't write nulls, etc.)...
 //NOTE: System.Text.Json is still missing support for Global changes to default Serialization settings...
-//      So we use this open source solution -- ported/improved into our own version -- to provide an elegant workaround: https://github.com/FetchGoods/Text.Json.Extensions/tree/master
-//      More info. on Stack Overflow here: https://stackoverflow.com/q/58331479/7293142
-SystemTextJsonDefaults.DefaultSerializerOptions = SystemTextJsonDefaults.RelaxedCaseInsensitiveCamelCaseDefaults;
+//      So we use the SystemTextJson helpers library -- to provide an elegant workaround that we configure here to use Relaxed Web Defaults!
+SystemTextJsonDefaults.ConfigureDefaults(SystemTextJsonDefaults.CreateRelaxedJsonSerializerOptions(allowWritingNullValues: false));
 
 await host.RunAsync().ConfigureAwait(false);

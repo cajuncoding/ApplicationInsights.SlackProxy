@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using SlackProxy.CustomExtensions;
-using SystemTextJsonExtensions;
+using SystemTextJsonHelpers;
 
 namespace SlackProxy.Models
 {
@@ -72,25 +71,22 @@ namespace SlackProxy.Models
 
             var firstAllOfJson = dataJson["alertContext"]?["condition"]?["allOf"]?.AsArray()?.FirstOrDefault();
 
-            SearchQueryText = firstAllOfJson?["searchQuery"]?.GetValue<string>();
-            LinkToFilteredSearchResultsUIUri = firstAllOfJson?["linkToFilteredSearchResultsUI"]?.GetConvertedValue<Uri>();
-            LinkToSearchResultsUIUri = firstAllOfJson?["linkToSearchResultsUI"]?.GetConvertedValue<Uri>();
+            SearchQueryText = firstAllOfJson?["searchQuery"]?.ValueSafely<string>();
+            LinkToFilteredSearchResultsUIUri = firstAllOfJson?["linkToFilteredSearchResultsUI"]?.ValueSafely<Uri>();
+            LinkToSearchResultsUIUri = firstAllOfJson?["linkToSearchResultsUI"]?.ValueSafely<Uri>();
 
             var customPropsJson = dataJson["customProperties"];
 
             //Support either Pascal Case or Camel Case in the custom prop names...
-            HeaderDescription = (customPropsJson?["HeaderDescription"] ?? customPropsJson?["headerDescription"])?.GetValue<string>();
-            SearchQueryDescription = (customPropsJson?["SearchQueryDescription"] ?? customPropsJson?["searchQueryDescription"])?.GetValue<string>();
-            SlackChannelWebHookUri = customPropsJson?["SlackChannelWebHookUri"]?.GetConvertedValue<Uri>();
+            HeaderDescription = (customPropsJson?["HeaderDescription"] ?? customPropsJson?["headerDescription"])?.ValueSafely<string>();
+            SearchQueryDescription = (customPropsJson?["SearchQueryDescription"] ?? customPropsJson?["searchQueryDescription"])?.ValueSafely<string>();
+            SlackChannelWebHookUri = customPropsJson?["SlackChannelWebHookUri"]?.ValueSafely<Uri>();
             AdditionalMessages = customPropsJson
                 ?.AsObject()
-                ?.ToArray()
-                .Where(prop => 
-                    prop.Value.GetValueKind() == JsonValueKind.String //This also means it is not JTokenType.Null!
-                    && prop.Key.StartsWith("AdditionalMessage", StringComparison.OrdinalIgnoreCase)
-                )
+                ?.GetProperties(dataTypeFilter: JsonDataTypeFilter.String)
+                .Where(prop => prop.Key.StartsWith("AdditionalMessage", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(prop => prop.Key)
-                .Select(prop => prop.Value.GetValue<string>())
+                .Select(prop => prop.Value?.ValueSafely<string>())
                 .ToArray() ?? Array.Empty<string>();
         }
 
