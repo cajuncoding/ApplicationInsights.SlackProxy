@@ -49,7 +49,7 @@ namespace SlackProxy.Models
 
         public string StatusDescription => Status?.GetEnumMemberName();
 
-        public string PrimaryMessage { get; } = string.Empty;
+        public string PrimaryMessage { get; set; } = null;
         public string[] AdditionalMessages { get; set; } = Array.Empty<string>();
         public Uri SlackChannelWebHookUri { get; set; } = null;
         public Uri ReferencedLinkUri { get; set; } = null;
@@ -60,7 +60,7 @@ namespace SlackProxy.Models
             //Formulate the Alert/Warning message...
             var slackMessageBuilder = new SlackMessageBuilder()
                 .AddHeader($"{StatusIcon} [{StatusDescription}] {HeaderDescription}")
-                .AddSection(PrimaryMessage);
+                .AddSection(PrimaryMessage ?? string.Empty);
 
             //Append any additional messages that are configured as custom properties...
             foreach (var additionalMessage in (AdditionalMessages ?? []))
